@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phocab"
+version = "0.1.0"
+description = "Photograph an everyday object, get a Korean vocabulary card."
+readme = "README.md"
+requires-python = ">=3.12"
+# Only deps the code uses today; each later checklist item adds its own
+# (SQLAlchemy, Alembic, boto3, ...) so every dependency maps to real code.
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic-settings>=2.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6",
+    "pytest>=8",
+    "httpx2>=2.16",  # required by FastAPI's TestClient (Starlette deprecated plain httpx)
+]
+
+# Package only the API. model_service is a separate container with heavy ML
+# deps, so it gets its own requirements instead of bloating the API install.
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

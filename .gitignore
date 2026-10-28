@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secrets: only .env.example is committed
+.env
+
+# Eval photos may show people or private spaces (CLAUDE.md rule 5)
+eval/photos/*
+!eval/photos/.gitkeep
+
+# Hugging Face model weights
+.cache/
+hf_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
