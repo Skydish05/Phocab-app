@@ -21,6 +21,9 @@ dev = [
     "ruff>=0.6",
     "pytest>=8",
     "httpx2>=2.16",  # required by FastAPI's TestClient (Starlette deprecated plain httpx)
+    # model_service tests need these, but not torch: they use a fake classifier.
+    "pillow>=10.4",
+    "python-multipart>=0.0.9",
 ]
 
 # Package only the API. model_service is a separate container with heavy ML
@@ -37,3 +40,6 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# model_service isn't pip-installed (it's its own container), so put the repo
+# root on sys.path for tests to import it.
+pythonpath = ["."]

@@ -22,9 +22,12 @@ The full plan (architecture, schema, endpoints, 14-day checklist) is in `docs/PL
 Update these as they become real; keep them accurate.
 - Setup: `python3.12 -m venv .venv && source .venv/bin/activate` (system pip is PEP 668-locked)
 - Install: `pip install -e ".[dev]"`
+- Install model service deps (CPU torch, large): `pip install -r model_service/requirements.txt`
 - Lint/format: `ruff check . && ruff format --check .`
 - Test: `pytest -q`
 - Run locally (no Docker yet): `uvicorn app.main:app --reload`
+- Run model service locally: `uvicorn model_service.main:app --port 8001`
+- Benchmark model (top-3, latency, peak memory): `python -m model_service.bench eval/photos`
 - Run locally with Docker (not yet available): `docker compose -f infra/docker-compose.yml up --build`
 - Migrate (not yet available): `alembic upgrade head`
 - Eval (not yet available): `python eval/run_eval.py`

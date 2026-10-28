@@ -1,0 +1,13 @@
+# Separate from pyproject.toml: these ML deps are large (torch alone is
+# hundreds of MB) and only the model-service container needs them.
+# CPU-only torch wheels: the EC2 target has no GPU, and the CUDA build is ~5x bigger.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.4
+transformers>=5,<6  # v5 changed get_*_features to return output objects
+sentencepiece>=0.2  # SigLIP 2 Gemma tokenizer
+protobuf>=5
+pillow>=10.4
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9  # FastAPI needs it to parse UploadFile
+pydantic-settings>=2.4
