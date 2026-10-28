@@ -28,6 +28,7 @@ Update these as they become real; keep them accurate.
 - Run locally (no Docker yet): `uvicorn app.main:app --reload`
 - Run model service locally: `uvicorn model_service.main:app --port 8001`
 - Benchmark model (top-3, latency, peak memory): `python -m model_service.bench eval/photos`
+- Benchmark as a 2-vCPU box, saved to eval/results: `taskset -c 0,1 python -m model_service.bench eval/photos --threads 2 --repeat 5 --output eval/results/bench_2vcpu.md`
 - Run locally with Docker (not yet available): `docker compose -f infra/docker-compose.yml up --build`
 - Migrate (not yet available): `alembic upgrade head`
 - Eval (not yet available): `python eval/run_eval.py`
