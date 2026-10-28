@@ -8,7 +8,7 @@ The goal is a deployed, tested photo-to-Korean-vocabulary web app with a measure
 
 **In scope**
 
-- Photo upload from a phone, object recognition, and a generated Korean card (word, romanization, 2 example sentences)
+- Photo upload from a phone, object recognition, and a generated Korean card (word, romanization, 1 Korean example sentence)
 - Login, personal decks, and simple Leitner-box review
 - Caching of generated cards, a "this is wrong" feedback button, and per-user rate limits
 - FastAPI + PostgreSQL + S3, Docker Compose, GitHub Actions to AWS (EC2 + ECR)
@@ -91,7 +91,7 @@ Five tables cover the whole product. The key design choice is splitting shared, 
 | Table | Columns | Notes |
 | --- | --- | --- |
 | users | id, email (unique), password\_hash, created\_at, daily\_quota | Quota drives the rate limit |
-| words | id, label\_en (unique, normalized), korean, romanization, topik\_level, examples (JSONB), audio\_url, source (hf / vlm), created\_at | The cache: one row per object label |
+| words | id, label\_en (unique, normalized), korean, romanization, topik\_level, example (text), audio\_url, source (hf / vlm), created\_at | The cache: one row per object label |
 | photos | id, user\_id, s3\_key, word\_id (nullable), confidence, model\_used, latency\_ms, created\_at | Records every upload and which model path handled it |
 | user\_cards | id, user\_id, word\_id, photo\_id, box (1-5), next\_review\_at, times\_correct, times\_wrong, created\_at | Unique on (user\_id, word\_id); Leitner state |
 | feedback | id, user\_id, photo\_id, word\_id, reason (wrong\_object / wrong\_korean / other), note, created\_at | Your corrections dataset for evaluation |
@@ -131,7 +131,7 @@ The JSON API is the contract; the Jinja/HTMX pages call the same routes and swap
 
 ## AI pipeline and evaluation
 
-The pipeline's job is to be grounded: the open model picks from a fixed vocabulary list, so the Korean word always comes from a curated source and not from free generation. The LLM only writes the extras (example sentences, a mnemonic).
+The pipeline's job is to be grounded: the open model picks from a fixed vocabulary list, so the Korean word always comes from a curated source and not from free generation. The LLM only writes the extra: one Korean example sentence.
 
 **Recognition (model\_service)**
 
@@ -141,7 +141,7 @@ The pipeline's job is to be grounded: the open model picks from a fixed vocabula
 
 **Card generation (card\_generator)**
 
-- Ask the LLM for strict JSON: 2 example sentences (beginner level, using the word), one mnemonic. Validate with Pydantic; on failure, retry with the error message appended, up to 2 times.
+- Ask the LLM for strict JSON: 1 example sentence in Korean only (beginner level, using the word, no English translation). Validate with Pydantic; on failure, retry with the error message appended, up to 2 times.
 - Never let the LLM change the Korean word or romanization taken from the vocabulary file.
 - Cache by normalized `label_en` in the `words` table.
 

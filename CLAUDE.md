@@ -1,6 +1,6 @@
 # Korean Photo Vocab App
 
-Web app where a user photographs an everyday object and gets a Korean vocabulary card (word, romanization, example sentences, audio). Cards go into a personal deck reviewed with Leitner boxes. This is a portfolio project for Backend / AI Engineer internship applications, so it must be deployed, tested, and evaluated with real numbers.
+Web app where a user photographs an everyday object and gets a Korean vocabulary card (word, romanization, one Korean example sentence, audio). Cards go into a personal deck reviewed with Leitner boxes. This is a portfolio project for Backend / AI Engineer internship applications, so it must be deployed, tested, and evaluated with real numbers.
 
 The full plan (architecture, schema, endpoints, 14-day checklist) is in `docs/PLAN.md`. Follow it. Work on ONE checklist item at a time and tell me which item you are on.
 
@@ -34,7 +34,7 @@ Update these as they become real; keep them accurate.
 - Eval (not yet available): `python eval/run_eval.py`
 
 ## Rules
-1. Korean word, romanization, and TOPIK level ALWAYS come from `labels_ko.csv`. The LLM may only write example sentences and mnemonics, and must never change the vocabulary fields.
+1. Korean word, romanization, and TOPIK level ALWAYS come from `labels_ko.csv`. The LLM may only write the Korean example sentence, and must never change the vocabulary fields.
 2. All LLM output is validated against a Pydantic schema, with at most 2 retries.
 3. Every behavior change comes with a test. Run lint and tests before saying a task is done.
 4. No secrets in the repo. Config comes from environment variables; keep `.env.example` current.
