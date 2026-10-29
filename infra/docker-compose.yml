@@ -1,0 +1,31 @@
+# Local development. Only Postgres for now; the API runs on the host with uvicorn
+# until the Dockerfiles item adds the app and model_service here.
+# Fixed project name; otherwise Compose names it after the folder ("infra").
+name: phocab
+
+services:
+  db:
+    # Pinned major version: Postgres 18 changed the image's data-dir layout,
+    # and a surprise major upgrade would make the existing volume unreadable.
+    image: postgres:17
+    environment:
+      # Local-only defaults so `docker compose up` works without a .env; the
+      # real server sets its own values through the environment.
+      POSTGRES_USER: ${POSTGRES_USER:-phocab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-phocab}
+      POSTGRES_DB: ${POSTGRES_DB:-phocab}
+    ports:
+      # Bound to localhost so the dev database isn't reachable from the LAN.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Later services wait on this (depends_on: service_healthy) instead of
+      # racing Postgres at startup.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  pgdata:
