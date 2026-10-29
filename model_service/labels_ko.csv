@@ -7,13 +7,13 @@ book,책,chaek,1
 pen,펜,pen,1
 pencil,연필,yeonpil,1
 bag,가방,gabang,1
-phone,휴대폰,hyudaepon,1
+smartphone,휴대폰,hyudaepon,1
 laptop,노트북,noteubuk,2
 clock,시계,sigye,1
 key,열쇠,yeolsoe,2
-shoe,신발,sinbal,1
+shoes,신발,sinbal,1
 umbrella,우산,usan,1
-glasses,안경,an-gyeong,1
+eyeglasses,안경,an-gyeong,1
 hat,모자,moja,1
 spoon,숟가락,sutgarak,1
 chopsticks,젓가락,jeotgarak,1
@@ -32,29 +32,23 @@ banana,바나나,banana,1
 fork,포크,pokeu,1
 cutting board,도마,doma,2
 frying pan,프라이팬,peuraipaen,2
-pot,냄비,naembi,2
+cooking pot,냄비,naembi,2
 kettle,주전자,jujeonja,2
 rice cooker,밥솥,bapsot,2
 microwave,전자레인지,jeonjareinji,2
 gas stove,가스레인지,gaseureinji,2
-toaster,토스터,toseuteo,3
-blender,믹서기,mikseogi,3
-oven,오븐,obeun,2
 ladle,국자,gukja,2
 tray,쟁반,jaengban,2
 napkin,냅킨,naepkin,2
-straw,빨대,ppaldae,2
+drinking straw,빨대,ppaldae,2
 paper cup,종이컵,jongikeop,2
 drinking glass,유리컵,yurikeop,2
 wine glass,와인잔,wainjan,3
 water bottle,물병,mulbyeong,2
-can,캔,kaen,2
+drink can,캔,kaen,2
 lid,뚜껑,ttukkeong,3
-earthenware jar,항아리,hangari,3
 lunch box,도시락,dosirak,2
 sink,싱크대,singkeudae,2
-dishwasher,식기세척기,sikgisecheokgi,4
-apron,앞치마,apchima,2
 bread,빵,ppang,1
 rice,밥,bap,1
 egg,달걀,dalgyal,1
@@ -65,13 +59,13 @@ juice,주스,juseu,1
 beer,맥주,maekju,1
 soju,소주,soju,2
 wine,와인,wain,2
-ice,얼음,eoreum,2
+ice cubes,얼음,eoreum,2
 cake,케이크,keikeu,1
 snack,과자,gwaja,1
 candy,사탕,satang,2
 chocolate,초콜릿,chokollit,2
 ice cream,아이스크림,aiseukeurim,1
-gum,껌,kkeom,2
+chewing gum,껌,kkeom,2
 noodles,국수,guksu,1
 ramen,라면,ramyeon,1
 kimchi,김치,gimchi,1
@@ -87,12 +81,7 @@ sandwich,샌드위치,saendeuwichi,2
 pizza,피자,pija,1
 hamburger,햄버거,haembeogeo,1
 cheese,치즈,chijeu,2
-salt,소금,sogeum,2
-sugar,설탕,seoltang,2
 soy sauce,간장,ganjang,2
-cooking oil,기름,gireum,2
-honey,꿀,kkul,2
-jam,잼,jaem,3
 orange,오렌지,orenji,1
 grape,포도,podo,1
 strawberry,딸기,ttalgi,1
@@ -127,8 +116,7 @@ blanket,이불,ibul,2
 curtain,커튼,keoteun,2
 carpet,카펫,kapet,3
 lamp,전등,jeondeung,2
-fan,선풍기,seonpunggi,2
-hand fan,부채,buchae,3
+electric fan,선풍기,seonpunggi,2
 air conditioner,에어컨,eeokeon,2
 heater,난로,nallo,3
 humidifier,가습기,gaseupgi,4
@@ -145,41 +133,31 @@ broom,빗자루,bitjaru,3
 mop,대걸레,daegeolle,4
 vacuum cleaner,청소기,cheongsogi,2
 washing machine,세탁기,setakgi,2
-iron,다리미,darimi,3
+clothes iron,다리미,darimi,3
 hanger,옷걸이,otgeori,2
 wardrobe,옷장,otjang,2
 drawer,서랍,seorap,2
 shelf,선반,seonban,3
 bookshelf,책장,chaekjang,2
 stairs,계단,gyedan,2
-wall,벽,byeok,2
-floor,바닥,badak,2
-ceiling,천장,cheonjang,3
 light switch,스위치,seuwichi,3
 power outlet,콘센트,konsenteu,3
 doorbell,초인종,choinjong,3
 mailbox,우편함,upyeonham,3
-lock,자물쇠,jamulsoe,3
-box,상자,sangja,1
+padlock,자물쇠,jamulsoe,3
+cardboard box,상자,sangja,1
 basket,바구니,baguni,2
 bucket,양동이,yangdongi,3
 plastic bag,비닐봉지,binilbongji,3
 paper bag,종이봉투,jongibongtu,3
-rope,밧줄,batjul,3
 candle,양초,yangcho,3
 lighter,라이터,raiteo,3
 battery,건전지,geonjeonji,3
 flashlight,손전등,sonjeondeung,3
 fire extinguisher,소화기,sohwagi,4
-ladder,사다리,sadari,3
-hammer,망치,mangchi,3
-nail,못,mot,3
-screwdriver,드라이버,deuraibeo,4
-tape,테이프,teipeu,2
+adhesive tape,테이프,teipeu,2
 glue,풀,pul,2
 rubber band,고무줄,gomujul,3
-needle,바늘,baneul,3
-thread,실,sil,3
 towel,수건,sugeon,1
 mirror,거울,geoul,1
 toothpaste,치약,chiyak,2
@@ -196,10 +174,9 @@ nail clipper,손톱깎이,sontopkkakki,3
 lotion,로션,rosyeon,2
 perfume,향수,hyangsu,2
 lipstick,립스틱,ripseutik,3
-sponge,스펀지,seupeonji,3
+dish sponge,수세미,susemi,3
 medicine,약,yak,1
-bandage,밴드,baendeu,3
-thermometer,체온계,cheon-gye,4
+adhesive bandage,반창고,banchanggo,3
 face mask,마스크,maseukeu,2
 shirt,셔츠,syeocheu,1
 t-shirt,티셔츠,tisyeocheu,1
@@ -218,39 +195,33 @@ sneakers,운동화,undonghwa,1
 boots,부츠,bucheu,2
 slippers,슬리퍼,seullipeo,2
 sandals,샌들,saendeul,3
-underwear,속옷,sogot,2
 pajamas,잠옷,jamot,2
-swimsuit,수영복,suyeongbok,2
 raincoat,비옷,biot,3
 hanbok,한복,hanbok,1
 button,단추,danchu,3
-ring,반지,banji,2
+finger ring,반지,banji,2
 necklace,목걸이,mokgeori,2
 earrings,귀걸이,gwigeori,2
 bracelet,팔찌,paljji,3
 wallet,지갑,jigap,1
 backpack,배낭,baenang,2
-suitcase,여행 가방,yeohaeng gabang,2
+suitcase,캐리어,kaerieo,3
 sunglasses,선글라스,seon-geullaseu,2
-notebook,공책,gongchaek,1
+paper notebook,공책,gongchaek,1
 eraser,지우개,jiugae,1
 ruler,자,ja,2
-paper,종이,jongi,1
+sheet of paper,종이,jongi,1
 envelope,봉투,bongtu,2
-postage stamp,우표,upyo,2
 calculator,계산기,gyesan-gi,2
 stapler,스테이플러,seuteipeulleo,4
 highlighter,형광펜,hyeonggwangpen,3
 pencil case,필통,piltong,2
 sticker,스티커,seutikeo,3
-paintbrush,붓,but,3
-crayon,크레용,keureyong,3
 map,지도,jido,1
 dictionary,사전,sajeon,1
 newspaper,신문,sinmun,1
 magazine,잡지,japji,2
 blackboard,칠판,chilpan,2
-globe,지구본,jigubon,4
 computer,컴퓨터,keompyuteo,1
 keyboard,키보드,kibodeu,2
 computer mouse,마우스,mauseu,2
@@ -262,24 +233,19 @@ earphones,이어폰,ieopon,2
 charger,충전기,chungjeon-gi,3
 camera,카메라,kamera,1
 speaker,스피커,seupikeo,3
-radio,라디오,radio,2
 guitar,기타,gita,2
 piano,피아노,piano,1
-drum,북,buk,3
-violin,바이올린,baiollin,3
 ball,공,gong,1
 soccer ball,축구공,chukgugong,2
 doll,인형,inhyeong,2
 toy,장난감,jangnan-gam,2
 balloon,풍선,pungseon,2
-gift,선물,seonmul,1
 coin,동전,dongjeon,2
 banknote,지폐,jipye,3
 credit card,신용카드,sinyongkadeu,2
 ticket,표,pyo,1
 passport,여권,yeogwon,2
 receipt,영수증,yeongsujeung,2
-photograph,사진,sajin,1
 car,자동차,jadongcha,1
 bicycle,자전거,jajeongeo,1
 bus,버스,beoseu,1
@@ -287,39 +253,57 @@ taxi,택시,taeksi,1
 motorcycle,오토바이,otobai,2
 truck,트럭,teureok,3
 train,기차,gicha,1
-subway,지하철,jihacheol,1
+subway train,지하철,jihacheol,1
 airplane,비행기,bihaenggi,1
 traffic light,신호등,sinhodeung,2
-crosswalk,횡단보도,hoengdanbodo,3
 bench,벤치,benchi,3
 street lamp,가로등,garodeung,3
 helmet,헬멧,helmet,3
 stroller,유모차,yumocha,3
-tire,타이어,taieo,4
 building,건물,geonmul,1
-house,집,jip,1
-bridge,다리,dari,2
-mountain,산,san,1
-river,강,gang,1
-sea,바다,bada,1
-sky,하늘,haneul,1
-cloud,구름,gureum,1
-sun,해,hae,1
-moon,달,dal,1
-stone,돌,dol,2
-grass,잔디,jandi,3
 tree,나무,namu,1
 leaf,나뭇잎,namunnip,2
 dog,개,gae,1
 cat,고양이,goyangi,1
 bird,새,sae,1
-fish,물고기,mulgogi,1
-rabbit,토끼,tokki,2
-chicken,닭,dak,2
-cow,소,so,2
-pig,돼지,dwaeji,2
-horse,말,mal,2
-duck,오리,ori,3
-butterfly,나비,nabi,2
-bee,벌,beol,3
-turtle,거북,geobuk,3
+mug,머그컵,meogeukeop,2
+tumbler,텀블러,teombeulleo,2
+table,탁자,takja,2
+tongs,집게,jipge,3
+side dishes,반찬,banchan,2
+stew,찌개,jjigae,3
+bibimbap,비빔밥,bibimbap,1
+tteokbokki,떡볶이,tteokbokki,2
+fried chicken,치킨,chikin,1
+french fries,감자튀김,gamjatwigim,2
+salad,샐러드,saelleodeu,2
+yogurt,요구르트,yogureuteu,2
+makgeolli,막걸리,makgeolli,3
+gochujang,고추장,gochujang,3
+broccoli,브로콜리,beurokolli,3
+bell pepper,파프리카,papeurika,3
+water purifier,정수기,jeongsugi,3
+vending machine,자판기,japangi,3
+power strip,멀티탭,meoltitaep,3
+power bank,보조배터리,bojobaeteori,3
+cable,케이블,keibeul,3
+wristwatch,손목시계,sonmoksigye,2
+digital door lock,도어락,doeorak,3
+trash bag,쓰레기봉투,sseuregibongtu,3
+tissue,티슈,tisyu,3
+wet wipes,물티슈,multisyu,3
+sunscreen,선크림,seonkeurim,3
+hoodie,후드티,hudeuti,3
+jeans,청바지,cheongbaji,2
+shorts,반바지,banbaji,2
+student ID card,학생증,haksaengjeung,2
+transportation card,교통카드,gyotongkadeu,3
+textbook,교과서,gyogwaseo,3
+whiteboard,화이트보드,hwaiteubodeu,2
+projector,프로젝터,peurojekteo,3
+sticky notes,포스트잇,poseuteuit,3
+escalator,에스컬레이터,eseukeolleiteo,3
+elevator,엘리베이터,ellibeiteo,2
+apartment building,아파트,apateu,1
+bus stop,버스 정류장,beoseu jeongnyujang,3
+pigeon,비둘기,bidulgi,3
