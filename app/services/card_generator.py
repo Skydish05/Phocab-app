@@ -37,10 +37,15 @@ class LLMClient(Protocol):
 
     A Protocol keeps provider SDKs out of this module, so tests use a fake and
     swapping providers doesn't touch the validation/retry logic. Transport
-    errors (timeouts, 5xx) are the client's job; provider SDKs already retry them.
+    errors (timeouts, 5xx) are the client's job: it retries them itself and
+    raises LLMError once it gives up.
     """
 
     async def complete(self, messages: list[Message]) -> str: ...
+
+
+class LLMError(Exception):
+    """The provider was unreachable or kept failing. The API maps this to a 502."""
 
 
 @dataclass(frozen=True)

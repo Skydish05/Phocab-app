@@ -13,6 +13,13 @@ from sqlalchemy.orm import Session
 # Set before any test imports app.main (which builds the app, and so the settings,
 # at import time). Assigned, not setdefault, so tests never depend on your shell or .env.
 os.environ["JWT_SECRET"] = "test-only-secret-at-least-32-characters-long"
+os.environ["S3_BUCKET"] = "phocab-test-photos"
+os.environ["GEMINI_API_KEY"] = "test-only-not-a-real-key"
+# Fake AWS credentials so boto3 can never pick up a real profile from your machine;
+# S3 tests run against moto's in-memory S3.
+os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+os.environ.pop("AWS_PROFILE", None)
 
 from app.db import get_db  # noqa: E402
 from app.main import create_app  # noqa: E402

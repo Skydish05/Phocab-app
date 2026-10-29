@@ -21,16 +21,20 @@ dependencies = [
     "argon2-cffi>=23.1",
     "pyjwt>=2.9",
     "email-validator>=2.2",  # backs Pydantic's EmailStr
+    "python-multipart>=0.0.9",  # FastAPI needs it to parse photo uploads
+    "pillow>=10.4",
+    # The same client FastAPI's TestClient uses, so one HTTP library covers both.
+    "httpx2>=2.16",
+    "boto3>=1.35",
+    "google-genai>=2.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "ruff>=0.6",
     "pytest>=8",
-    "httpx2>=2.16",  # required by FastAPI's TestClient (Starlette deprecated plain httpx)
-    # model_service tests need these, but not torch: they use a fake classifier.
-    "pillow>=10.4",
-    "python-multipart>=0.0.9",
+    # In-memory S3 for tests, so they never touch (or bill) a real AWS account.
+    "moto[s3]>=5.0",
 ]
 
 # Package only the API. model_service is a separate container with heavy ML

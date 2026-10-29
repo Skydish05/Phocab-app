@@ -37,3 +37,15 @@ class UserOut(BaseModel):
 
 class MeOut(BaseModel):
     email: str
+
+
+class CardOut(BaseModel):
+    card_id: int
+    label_en: str
+    korean: str
+    romanization: str
+    topik_level: int
+    example: str
+    # The model's score for this label, shown so a low-confidence card can be
+    # flagged in the UI and reported with the "this is wrong" button.
+    confidence: float

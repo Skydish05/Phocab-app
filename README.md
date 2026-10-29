@@ -10,7 +10,7 @@ example sentences, audio), reviewed with Leitner boxes.
 ```bash
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env                      # then set JWT_SECRET (command in the file)
+cp .env.example .env                      # then fill in the required values (JWT_SECRET, S3_BUCKET, GEMINI_API_KEY)
 
 ruff check . && ruff format --check .   # lint
 pytest -q                               # tests
