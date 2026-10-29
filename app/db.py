@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from functools import lru_cache
 
 from sqlalchemy import Engine, create_engine
@@ -20,3 +21,10 @@ def get_sessionmaker() -> sessionmaker[Session]:
     # expire_on_commit=False lets a route return ORM objects after committing
     # without a surprise reload query per attribute.
     return sessionmaker(get_engine(), expire_on_commit=False)
+
+
+def get_db() -> Iterator[Session]:
+    # One session per request, closed even if the route raises. A dependency
+    # (not a global session) is what lets tests swap in a rolled-back session.
+    with get_sessionmaker()() as session:
+        yield session

@@ -5,9 +5,17 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, make_url, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
+
+# Set before any test imports app.main (which builds the app, and so the settings,
+# at import time). Assigned, not setdefault, so tests never depend on your shell or .env.
+os.environ["JWT_SECRET"] = "test-only-secret-at-least-32-characters-long"
+
+from app.db import get_db  # noqa: E402
+from app.main import create_app  # noqa: E402
 
 # A separate database from the dev one, so running tests never wipes your data.
 TEST_DATABASE_URL = os.environ.get(
@@ -81,3 +89,14 @@ def db_session(db_engine: Engine) -> Iterator[Session]:
         finally:
             session.close()
             outer.rollback()
+
+
+@pytest.fixture
+def client(db_session: Session) -> TestClient:
+    """The real app, with routes using the test's rolled-back session.
+
+    Sharing db_session also lets a test inspect rows a request just wrote.
+    """
+    app = create_app()
+    app.dependency_overrides[get_db] = lambda: db_session
+    return TestClient(app)

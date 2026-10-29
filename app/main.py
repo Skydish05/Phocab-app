@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.config import get_settings
+from app.routers import auth
 
 
 def create_app() -> FastAPI:
@@ -15,6 +16,7 @@ def create_app() -> FastAPI:
         # post-deploy smoke test don't fail because a dependency is slow.
         return {"status": "ok"}
 
+    app.include_router(auth.router)
     return app
 
 

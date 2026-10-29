@@ -26,7 +26,7 @@ Update these as they become real; keep them accurate.
 - Lint/format: `ruff check . && ruff format --check .`
 - Start Postgres (needed by the app and DB tests): `docker compose -f infra/docker-compose.yml up -d --wait db`
 - Test: `pytest -q` (DB tests use a separate `phocab_test` database, created and migrated automatically)
-- Run locally (no Docker yet): `uvicorn app.main:app --reload`
+- Run locally (no Docker yet): `uvicorn app.main:app --reload` (needs `JWT_SECRET` in `.env`; see `.env.example`)
 - Run model service locally: `uvicorn model_service.main:app --port 8001`
 - Benchmark model (top-3, latency, peak memory): `python -m model_service.bench eval/photos`
 - Benchmark as a 2-vCPU box, saved to eval/results: `taskset -c 0,1 python -m model_service.bench eval/photos --threads 2 --repeat 5 --output eval/results/bench_2vcpu.md`
