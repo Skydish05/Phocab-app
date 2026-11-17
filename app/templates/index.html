@@ -11,6 +11,7 @@
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
 </head>
 <body class="min-h-screen bg-base-200">
 <main class="mx-auto max-w-md p-4 space-y-4">
@@ -47,6 +48,8 @@
     <button role="tab" class="tab tab-active" data-panel="panel-new">New card</button>
     <button role="tab" class="tab" data-panel="panel-deck"
             hx-get="/cards" hx-target="#deck">My deck</button>
+    <button role="tab" class="tab" data-panel="panel-review"
+            hx-get="/review/next" hx-target="#review">Review</button>
   </nav>
 
   <div id="panel-new" class="space-y-4">
@@ -74,6 +77,12 @@
 
   <div id="panel-deck" class="hidden">
     <section id="deck" aria-live="polite"></section>
+  </div>
+
+  <div id="panel-review" class="hidden">
+    {# Reloads itself when an answer is accepted (the HX-Trigger from POST /review). #}
+    <section id="review" aria-live="polite"
+             hx-get="/review/next" hx-trigger="card-reviewed from:body"></section>
   </div>
   </div>
 </main>
@@ -147,6 +156,7 @@
     localStorage.removeItem(TOKEN_KEY);
     $("result").innerHTML = "";
     $("deck").innerHTML = "";
+    $("review").innerHTML = "";
     showTab("panel-new");
     showApp();
   });

@@ -1,0 +1,49 @@
+{# HTMX fragment for the Review tab; rendered from the same ReviewNext as the JSON API. #}
+{% set card = review.card %}
+{% if card %}
+<p class="text-sm opacity-70 px-1 mb-2">{{ review.due_count }} card{{ "s" if review.due_count != 1 }} due</p>
+<article class="card bg-base-100 shadow">
+  <div class="card-body gap-3">
+    <div class="flex justify-between text-xs opacity-60">
+      <span>Box {{ card.box }}</span><span>TOPIK {{ card.topik_level }}</span>
+    </div>
+    {# Front: the English word, so the learner practises recalling the Korean. #}
+    <p class="text-center opacity-70">What's the Korean for</p>
+    <p class="text-center text-3xl font-bold">{{ card.label_en }}</p>
+    {# <details> reveals the answer without JavaScript, and keeps the grading
+       buttons hidden until the learner has actually looked. #}
+    <details class="group">
+      <summary class="btn btn-block group-open:hidden">Show answer</summary>
+      <div class="space-y-3 text-center">
+        <p class="text-4xl font-bold" lang="ko">{{ card.korean }}</p>
+        <p class="opacity-70">{{ card.romanization }}</p>
+        {% if card.example %}<p lang="ko">{{ card.example }}</p>{% endif %}
+        {# json-enc: the route takes a JSON body like every other API route.
+           hx-swap="none": the JSON result isn't shown; the HX-Trigger it sends
+           makes #review load the next card. #}
+        {# Both buttons disabled while one answer is in flight (the server's 409 is
+           the real double-tap guard; this just avoids sending the second request).
+           A plain selector, since the attribute is inherited and resolved per button. #}
+        <div class="flex gap-2" hx-ext="json-enc" hx-swap="none" hx-disabled-elt="#review button">
+          <button class="btn btn-error flex-1"
+                  hx-post="/review/{{ card.card_id }}" hx-vals='{"correct": false}'>I didn't</button>
+          <button class="btn btn-success flex-1"
+                  hx-post="/review/{{ card.card_id }}" hx-vals='{"correct": true}'>I knew it</button>
+        </div>
+      </div>
+    </details>
+  </div>
+</article>
+{% else %}
+<div class="card bg-base-100 shadow">
+  <div class="card-body items-center text-center">
+    {% if review.next_due_at %}
+    <p class="font-semibold">All done for now</p>
+    <p class="text-sm opacity-70">Next card {{ review.next_due_at | due_label(now) }}.</p>
+    {% else %}
+    <p class="font-semibold">Nothing to review yet</p>
+    <p class="text-sm opacity-70">Photograph an object in the New card tab to add your first word.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

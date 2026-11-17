@@ -73,3 +73,23 @@ class CardList(BaseModel):
     # The full count (not just this page), so a client can show "12 cards" and
     # know when to stop paging.
     total: int
+
+
+class ReviewNext(BaseModel):
+    # None when nothing is due; the client then shows next_due_at instead.
+    card: DeckCard | None
+    due_count: int
+    # When the soonest card becomes due; None only for an empty deck.
+    next_due_at: datetime | None
+
+
+class ReviewAnswer(BaseModel):
+    correct: bool
+
+
+class ReviewResult(BaseModel):
+    card_id: int
+    box: int
+    next_review_at: datetime
+    times_correct: int
+    times_wrong: int

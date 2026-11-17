@@ -20,7 +20,7 @@
       <div class="flex items-baseline justify-between gap-2">
         <p class="text-2xl font-bold" lang="ko">{{ card.korean }}</p>
         <span class="text-xs opacity-60 whitespace-nowrap">
-          Box {{ card.box }} · {{ card.next_review_at | due_label }}
+          Box {{ card.box }} · {{ card.next_review_at | due_label(now) }}
         </span>
       </div>
       <p class="text-sm opacity-70">{{ card.romanization }} · {{ card.label_en }} · TOPIK {{ card.topik_level }}</p>

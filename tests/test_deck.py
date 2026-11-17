@@ -125,6 +125,8 @@ def test_htmx_empty_deck_says_so(client: TestClient, db_session: Session):
         (timedelta(0), "due now"),
         (timedelta(minutes=30), "due in 1 h"),
         (timedelta(hours=5), "due in 5 h"),
+        (timedelta(hours=23), "due in 23 h"),
+        (timedelta(days=1, seconds=-5), "due tomorrow"),
         (timedelta(days=1), "due tomorrow"),
         (timedelta(days=3, hours=1), "due in 4 days"),
     ],

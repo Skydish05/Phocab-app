@@ -1,7 +1,7 @@
 """Jinja2 environment shared by the page routes and the HTMX fragments."""
 
 import math
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 
 from fastapi import Request
@@ -21,15 +21,21 @@ def wants_html(request: Request) -> bool:
     return request.headers.get("HX-Request") == "true"
 
 
-def due_label(when: datetime, now: datetime | None = None) -> str:
-    """'due now', 'due in 5 h', 'due tomorrow', 'due in 4 days'."""
-    now = now or datetime.now(UTC)
+def due_label(when: datetime, now: datetime) -> str:
+    """'due now', 'due in 5 h', 'due tomorrow', 'due in 4 days'.
+
+    `now` is passed in (from the route's clock dependency) rather than read here,
+    so the label always agrees with the due check the route made.
+    """
     seconds = (when - now).total_seconds()
     if seconds <= 0:
         return "due now"
-    # Rounded up, so a card due in 30 minutes never reads as "due in 0 h".
-    if seconds < 86400:
-        return f"due in {math.ceil(seconds / 3600)} h"
+    # Rounded up, so a card due in 30 minutes never reads as "due in 0 h". The
+    # comparison is on the rounded hours, so "a day minus a few seconds" (a wrong
+    # answer, shown a moment later) reads "due tomorrow", not "due in 24 h".
+    hours = math.ceil(seconds / 3600)
+    if hours < 24:
+        return f"due in {hours} h"
     days = math.ceil(seconds / 86400)
     return "due tomorrow" if days == 1 else f"due in {days} days"
 

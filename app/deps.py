@@ -1,5 +1,6 @@
 """Shared route dependencies."""
 
+from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Annotated
 
@@ -73,3 +74,12 @@ def get_storage() -> PhotoStorage:
 def get_llm() -> LLMClient:
     settings = get_settings()
     return GeminiClient(settings.gemini_api_key.get_secret_value(), settings.gemini_model)
+
+
+def get_now() -> datetime:
+    # The clock as a dependency: review tests override it to a fixed instant
+    # instead of racing the real clock or sleeping.
+    return datetime.now(UTC)
+
+
+Now = Annotated[datetime, Depends(get_now)]

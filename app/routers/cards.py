@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, contains_eager
 from app.deps import (
     CurrentUser,
     DbSession,
+    Now,
     get_llm,
     get_recognizer,
     get_storage,
@@ -23,6 +24,21 @@ from app.services.storage import PhotoStorage, StorageError
 from app.templating import templates, wants_html
 
 router = APIRouter(tags=["cards"])
+
+
+def to_deck_card(card: UserCard) -> DeckCard:
+    """Shared by the deck and the review routes, so both show a card the same way."""
+    return DeckCard(
+        card_id=card.id,
+        label_en=card.word.label_en,
+        korean=card.word.korean,
+        romanization=card.word.romanization,
+        topik_level=card.word.topik_level,
+        example=card.word.example,
+        box=card.box,
+        next_review_at=card.next_review_at,
+        created_at=card.created_at,
+    )
 
 
 def _add_to_deck(db: Session, user_id: int, word_id: int, photo_id: int) -> tuple[int, bool]:
@@ -142,6 +158,7 @@ def list_cards(
     request: Request,
     user: CurrentUser,
     db: DbSession,
+    now: Now,
     # Capped so one request can't pull a whole deck of thousands of cards.
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
@@ -167,20 +184,7 @@ def list_cards(
         .offset(offset)
     )
     deck = CardList(
-        items=[
-            DeckCard(
-                card_id=card.id,
-                label_en=card.word.label_en,
-                korean=card.word.korean,
-                romanization=card.word.romanization,
-                topik_level=card.word.topik_level,
-                example=card.word.example,
-                box=card.box,
-                next_review_at=card.next_review_at,
-                created_at=card.created_at,
-            )
-            for card in rows
-        ],
+        items=[to_deck_card(card) for card in rows],
         total=total,
     )
     if wants_html(request):
@@ -191,6 +195,8 @@ def list_cards(
             "limit": limit,
             "box": box,
             "next_offset": next_offset,
+            # The request clock, so "due in 2 days" agrees with what review uses.
+            "now": now,
         }
         return templates.TemplateResponse(request, "_deck.html", context)
     return deck
