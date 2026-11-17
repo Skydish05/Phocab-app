@@ -26,7 +26,13 @@ def test_returns_the_top_prediction():
 
     result = recognizer(handler).recognize(b"jpeg-bytes")
 
-    assert result == Recognition("cup", 0.91, "google/siglip2-base-patch16-224", 313)
+    assert result == Recognition(
+        "cup",
+        0.91,
+        "google/siglip2-base-patch16-224",
+        313,
+        candidates=(("cup", 0.91), ("mug", 0.4)),
+    )
     assert seen[0].url.path == "/classify"
     assert b"jpeg-bytes" in seen[0].read()  # sent as the multipart "file" field
 

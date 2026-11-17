@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = Field(default=60, gt=0)
 
     model_service_url: str = "http://localhost:8001"
+    # Below this top score the API doesn't make a card; it asks the user to pick
+    # from the top guesses. SigLIP scores are independent sigmoids, so correct
+    # guesses can be low (0.005-0.3 on the 10 eval photos) while off-list objects
+    # score around 0.00003. 0.001 separates those 10 photos; it is a placeholder
+    # until the "tune the confidence threshold" eval item measures it properly.
+    recognition_min_score: float = Field(default=0.001, ge=0, le=1)
     # The same file the model service classifies over, so every label it can
     # return has a curated Korean word here (rule 1: vocabulary comes from the CSV).
     vocab_path: Path = REPO_ROOT / "model_service" / "labels_ko.csv"

@@ -1,7 +1,8 @@
 """HTTP client for model_service's POST /classify.
 
-No VLM fallback yet: the confidence threshold for it gets tuned on the eval set
-(PLAN.md days 9-10), so for now the top label is always used and its score stored.
+No VLM fallback yet (PLAN.md days 9-10). Until then, a top score below
+RECOGNITION_MIN_SCORE makes the API ask the user to pick from the top guesses
+instead of making a card (see routers/cards.py).
 """
 
 from dataclasses import dataclass
@@ -34,6 +35,9 @@ class Recognition:
     confidence: float
     model_id: str
     latency_ms: int
+    # All returned guesses as (label_en, score), best first, including the top
+    # one. Shown to the user as "Is it one of these?" when the top score is low.
+    candidates: tuple[tuple[str, float], ...] = ()
 
 
 class RecognitionError(Exception):
@@ -60,4 +64,5 @@ class Recognizer:
             confidence=top.score,
             model_id=body.model_id,
             latency_ms=round(body.latency_ms),
+            candidates=tuple((p.label_en, p.score) for p in body.predictions),
         )

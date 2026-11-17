@@ -1,0 +1,37 @@
+{# HTMX fragment for a 422 "couldn't recognize" reply; rendered from UnrecognizedOut.
+   The page swaps this 422 in (see htmx:beforeSwap in index.html). #}
+<article class="card bg-base-100 shadow">
+  <div class="card-body gap-3">
+    <h2 class="card-title">Couldn't recognize this</h2>
+    {% if result.candidates %}
+    <p class="text-sm opacity-70">Is it one of these?</p>
+    {# A pick posts the word for the already-stored photo; the reply is the card,
+       which replaces this whole block (#result). #}
+    <div class="grid gap-2" hx-ext="json-enc" hx-target="#result" hx-swap="innerHTML"
+         hx-disabled-elt="#result button">
+      {% for c in result.candidates %}
+      <button class="btn justify-between"
+              hx-post="/photos/{{ result.photo_id }}/label"
+              hx-vals='{{ {"label_en": c.label_en} | tojson }}'>
+        <span lang="ko" class="text-lg">{{ c.korean }}</span>
+        <span class="opacity-70 font-normal">{{ c.label_en }}</span>
+      </button>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {# "None of these" is a wrong_object report with the user's own word for it:
+       the list of objects worth adding to labels_ko.csv. #}
+    <details class="feedback text-sm" {% if not result.candidates %}open{% endif %}>
+      <summary class="cursor-pointer opacity-70">None of these</summary>
+      <form class="mt-2 space-y-2" hx-post="/feedback" hx-ext="json-enc"
+            hx-target="closest details" hx-swap="outerHTML" hx-disabled-elt="find button">
+        <input type="hidden" name="photo_id" value="{{ result.photo_id }}">
+        <input type="hidden" name="reason" value="wrong_object">
+        <input type="text" name="note" maxlength="500" placeholder="What is it? (optional)"
+               class="input input-bordered input-sm w-full">
+        <button type="submit" class="btn btn-sm">Send</button>
+      </form>
+    </details>
+  </div>
+</article>

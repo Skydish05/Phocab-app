@@ -51,8 +51,9 @@ class CardOut(BaseModel):
     example: str
     # The model's raw score for this label. Returned for clients and debugging but
     # not shown on the page: SigLIP scores are independent probabilities, so a
-    # correct guess can score 0.01 and would read as "1% sure".
-    confidence: float
+    # correct guess can score 0.01 and would read as "1% sure". None when the user
+    # picked the word after "Couldn't recognize this": no model score applies.
+    confidence: float | None
     # The photo this card was made from, so "this is wrong" can point at the
     # exact photo and guess (the evaluation dataset), not just the word.
     photo_id: int
@@ -126,3 +127,26 @@ class FeedbackOut(BaseModel):
     word_id: int | None
     reason: FeedbackReason
     note: str | None
+
+
+class Candidate(BaseModel):
+    """One of the model's top guesses, with its vocabulary entry for display."""
+
+    label_en: str
+    korean: str
+    romanization: str
+    score: float
+
+
+class UnrecognizedOut(BaseModel):
+    """422 body when the top score is too low to trust: no card was made."""
+
+    detail: str
+    # The stored photo, so the client can send the user's pick to
+    # POST /photos/{photo_id}/label without uploading it again.
+    photo_id: int
+    candidates: list[Candidate]
+
+
+class LabelIn(BaseModel):
+    label_en: str = Field(max_length=100)

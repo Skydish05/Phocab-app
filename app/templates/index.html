@@ -182,6 +182,17 @@
     showError("");
   });
 
+  // One error is meant to be shown in place: "Couldn't recognize this" is a 422
+  // whose HTML body asks the user to pick a word. Other 422s (validation errors)
+  // are JSON, so the content type tells them apart.
+  document.body.addEventListener("htmx:beforeSwap", (event) => {
+    const xhr = event.detail.xhr;
+    if (xhr.status === 422 && (xhr.getResponseHeader("Content-Type") || "").startsWith("text/html")) {
+      event.detail.shouldSwap = true;
+      event.detail.isError = false;
+    }
+  });
+
   // HTMX doesn't swap 4xx/5xx responses; show the API's message instead.
   document.body.addEventListener("htmx:responseError", async (event) => {
     const xhr = event.detail.xhr;

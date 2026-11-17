@@ -36,6 +36,9 @@ SENTENCES = {"컵": "컵에 물이 있어요.", "신분증": "신분증을 보�
 class FakeRecognizer:
     def __init__(self) -> None:
         self.label = "cup"
+        self.confidence = 0.87
+        # The runner-up guesses after the top label; "tire" isn't in VOCAB.
+        self.others: tuple[tuple[str, float], ...] = (("ID card", 0.0002), ("tire", 0.0001))
         self.error: Exception | None = None
         self.seen: list[bytes] = []
 
@@ -43,7 +46,13 @@ class FakeRecognizer:
         self.seen.append(jpeg)
         if self.error:
             raise self.error
-        return Recognition(self.label, confidence=0.87, model_id="fake-siglip", latency_ms=42)
+        return Recognition(
+            self.label,
+            confidence=self.confidence,
+            model_id="fake-siglip",
+            latency_ms=42,
+            candidates=((self.label, self.confidence), *self.others),
+        )
 
 
 class FakeLLM:
@@ -343,3 +352,151 @@ def test_the_real_vocabulary_file_loads():
     vocab = load_vocabulary(get_settings().vocab_path)
 
     assert vocab["cup"] == VocabEntry("cup", "컵", "keop", 1)
+
+
+# --- "Couldn't recognize this": top score below RECOGNITION_MIN_SCORE (0.001) ---
+
+
+def test_low_score_makes_no_card_and_offers_the_guesses(
+    client: TestClient, fakes: SimpleNamespace, db_session: Session
+):
+    fakes.recognizer.confidence = 0.00003  # what an off-list object scores
+
+    response = upload(client, auth_headers(client))
+
+    assert response.status_code == 422
+    body = response.json()
+    photo = db_session.get(Photo, body["photo_id"])
+    assert body == {
+        "detail": "Couldn't recognize this object",
+        "photo_id": photo.id,
+        # "tire" isn't in the vocabulary, so it isn't offered.
+        "candidates": [
+            {"label_en": "cup", "korean": "컵", "romanization": "keop", "score": 0.00003},
+            {
+                "label_en": "id card",
+                "korean": "신분증",
+                "romanization": "sinbunjeung",
+                "score": 0.0002,
+            },
+        ],
+    }
+    # No card and no LLM call, but the photo is kept (eval data, and for the pick).
+    assert (count(db_session, UserCard), fakes.llm.calls) == (0, 0)
+    assert (photo.word_id, photo.confidence) == (None, 0.00003)
+    assert stored_keys(fakes.s3) == [photo.s3_key]
+
+
+def test_score_at_the_threshold_still_makes_a_card(client: TestClient, fakes: SimpleNamespace):
+    fakes.recognizer.confidence = 0.001
+
+    assert upload(client, auth_headers(client)).status_code == 201
+
+
+def test_threshold_comes_from_settings(client: TestClient, fakes: SimpleNamespace):
+    strict = get_settings().model_copy(update={"recognition_min_score": 0.9})
+    client.app.dependency_overrides[get_settings] = lambda: strict
+
+    assert upload(client, auth_headers(client)).status_code == 422  # 0.87 < 0.9
+
+
+def test_htmx_low_score_shows_the_guesses_as_buttons(client: TestClient, fakes: SimpleNamespace):
+    fakes.recognizer.confidence = 0.00003
+
+    response = upload(client, auth_headers(client) | {"HX-Request": "true"})
+
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith("text/html")
+    assert "Couldn't recognize this" in response.text
+    assert "컵" in response.text and "신분증" in response.text and "None of these" in response.text
+    assert response.text.count('hx-post="/photos/') == 2
+
+
+def unrecognized_photo_id(client: TestClient, fakes: SimpleNamespace, headers) -> int:
+    fakes.recognizer.confidence = 0.00003
+    return upload(client, headers).json()["photo_id"]
+
+
+def test_picking_a_word_makes_the_card(
+    client: TestClient, fakes: SimpleNamespace, db_session: Session
+):
+    headers = auth_headers(client)
+    photo_id = unrecognized_photo_id(client, fakes, headers)
+
+    response = client.post(
+        f"/photos/{photo_id}/label", json={"label_en": "ID card"}, headers=headers
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert (body["korean"], body["example"], body["confidence"]) == (
+        "신분증",
+        SENTENCES["신분증"],
+        None,
+    )
+    photo = db_session.get(Photo, photo_id)
+    card = db_session.get(UserCard, body["card_id"])
+    assert photo.word_id == card.word_id and card.photo_id == photo_id
+    # Marked as the user's label, so evaluation doesn't count it as a model prediction.
+    assert photo.model_used == "user-picked:fake-siglip"
+    assert fakes.llm.calls == 1
+
+
+def test_htmx_pick_returns_the_card_fragment(client: TestClient, fakes: SimpleNamespace):
+    headers = auth_headers(client)
+    photo_id = unrecognized_photo_id(client, fakes, headers)
+
+    response = client.post(
+        f"/photos/{photo_id}/label",
+        json={"label_en": "cup"},
+        headers=headers | {"HX-Request": "true"},
+    )
+
+    assert response.status_code == 201
+    assert "컵" in response.text and "This is wrong" in response.text
+
+
+def test_a_photo_can_be_labeled_only_once(client: TestClient, fakes: SimpleNamespace):
+    headers = auth_headers(client)
+    photo_id = unrecognized_photo_id(client, fakes, headers)
+
+    first = client.post(f"/photos/{photo_id}/label", json={"label_en": "cup"}, headers=headers)
+    second = client.post(f"/photos/{photo_id}/label", json={"label_en": "ID card"}, headers=headers)
+
+    assert (first.status_code, second.status_code) == (201, 409)
+
+
+def test_a_recognized_photo_cannot_be_relabeled(client: TestClient, fakes: SimpleNamespace):
+    headers = auth_headers(client)
+    photo_id = upload(client, headers).json()["photo_id"]  # recognized as cup
+
+    response = client.post(
+        f"/photos/{photo_id}/label", json={"label_en": "ID card"}, headers=headers
+    )
+
+    assert response.status_code == 409
+
+
+def test_cannot_label_someone_elses_photo(client: TestClient, fakes: SimpleNamespace):
+    photo_id = unrecognized_photo_id(client, fakes, auth_headers(client, "a@example.com"))
+
+    response = client.post(
+        f"/photos/{photo_id}/label",
+        json={"label_en": "cup"},
+        headers=auth_headers(client, "b@example.com"),
+    )
+
+    assert response.status_code == 404
+
+
+def test_picking_a_word_outside_the_vocabulary_is_rejected(
+    client: TestClient, fakes: SimpleNamespace, db_session: Session
+):
+    headers = auth_headers(client)
+    photo_id = unrecognized_photo_id(client, fakes, headers)
+
+    response = client.post(f"/photos/{photo_id}/label", json={"label_en": "tire"}, headers=headers)
+
+    assert response.status_code == 422
+    assert db_session.get(Photo, photo_id).word_id is None
+    assert count(db_session, UserCard) == 0
