@@ -27,6 +27,7 @@ dependencies = [
     "httpx2>=2.16",
     "boto3>=1.35",
     "google-genai>=2.0",
+    "jinja2>=3.1",  # server-rendered pages and HTMX fragments
 ]
 
 [project.optional-dependencies]
@@ -34,7 +35,8 @@ dev = [
     "ruff>=0.6",
     "pytest>=8",
     # In-memory S3 for tests, so they never touch (or bill) a real AWS account.
-    "moto[s3]>=5.0",
+    # [server] also runs it as a local endpoint for trying the app without AWS.
+    "moto[s3,server]>=5.0",
 ]
 
 # Package only the API. model_service is a separate container with heavy ML

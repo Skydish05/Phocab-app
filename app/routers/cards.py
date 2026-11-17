@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -20,6 +20,7 @@ from app.services.card_generator import CardGenerationError, LLMClient, LLMError
 from app.services.images import MAX_UPLOAD_BYTES, ImageError, prepare_upload
 from app.services.recognizer import RecognitionError, Recognizer
 from app.services.storage import PhotoStorage, StorageError
+from app.templating import templates
 
 router = APIRouter(tags=["cards"])
 
@@ -46,8 +47,13 @@ def _add_to_deck(db: Session, user_id: int, word_id: int, photo_id: int) -> tupl
 @router.post(
     "/cards/from-photo",
     status_code=status.HTTP_201_CREATED,
+    # Explicit because the return annotation includes Response (the HTMX
+    # fragment), which FastAPI can't turn into a schema; /docs still shows CardOut.
+    response_model=CardOut,
     responses={
         200: {"description": "This object is already in the deck; the existing card"},
+        # Documented so /docs readers know why the same route can return HTML.
+        201: {"description": "New card (an HTML fragment when sent with HX-Request: true)"},
         400: {"description": "Not a JPEG, PNG or WebP image"},
         413: {"description": "File larger than 5 MB"},
         502: {"description": "Model service, LLM or storage failure"},
@@ -55,6 +61,7 @@ def _add_to_deck(db: Session, user_id: int, word_id: int, photo_id: int) -> tupl
 )
 def create_card_from_photo(
     file: UploadFile,
+    request: Request,
     user: CurrentUser,
     db: DbSession,
     response: Response,
@@ -62,7 +69,7 @@ def create_card_from_photo(
     storage: Annotated[PhotoStorage, Depends(get_storage)],
     vocab: Annotated[Vocabulary, Depends(get_vocabulary)],
     llm: Annotated[LLMClient, Depends(get_llm)],
-) -> CardOut:
+) -> CardOut | Response:
     # Read one byte past the limit: enough to know the file is too big without
     # holding more of it. (Nginx's client_max_body_size will be the hard cap;
     # Starlette has already spooled the upload by the time this runs.)
@@ -112,9 +119,7 @@ def create_card_from_photo(
         storage.delete(s3_key)
         raise
 
-    if not created:
-        response.status_code = status.HTTP_200_OK
-    return CardOut(
+    card = CardOut(
         card_id=card_id,
         label_en=word.label_en,
         korean=word.korean,
@@ -123,3 +128,13 @@ def create_card_from_photo(
         example=word.example,
         confidence=recognition.confidence,
     )
+    card_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+    # One route for both clients (PLAN.md: the JSON API is the contract): HTMX
+    # marks its requests with HX-Request and gets the card as an HTML fragment to
+    # swap in; everyone else gets JSON. This keeps a single copy of the pipeline.
+    if request.headers.get("HX-Request") == "true":
+        return templates.TemplateResponse(
+            request, "_card.html", {"card": card, "created": created}, status_code=card_status
+        )
+    response.status_code = card_status
+    return card

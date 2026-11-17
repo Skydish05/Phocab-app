@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phocab</title>
+  {# CDN builds keep this item to zero build tooling. The Tailwind Play CDN compiles
+     classes in the browser, which is fine for an MVP; a compiled CSS file can
+     replace it during the "mobile layout polish" item. Versions are pinned so a
+     CDN release can't change the page under us. #}
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body class="min-h-screen bg-base-200">
+<main class="mx-auto max-w-md p-4 space-y-4">
+  <header class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Phocab</h1>
+    <div id="whoami" class="hidden items-center gap-2 text-sm">
+      <span id="whoami-email" class="opacity-70"></span>
+      <button id="logout" class="btn btn-ghost btn-xs">Log out</button>
+    </div>
+  </header>
+
+  <div id="error" role="alert" class="alert alert-error hidden"></div>
+
+  {# Login and register share one form: same two fields, different button. #}
+  <section id="auth-section" class="card bg-base-100 shadow hidden">
+    <form id="auth-form" class="card-body gap-3">
+      <h2 class="card-title">Log in or create an account</h2>
+      <input name="email" type="email" required autocomplete="email"
+             placeholder="Email" class="input input-bordered w-full">
+      <input name="password" type="password" required minlength="8" maxlength="128"
+             autocomplete="current-password" placeholder="Password (8+ characters)"
+             class="input input-bordered w-full">
+      <div class="flex gap-2">
+        <button type="submit" value="login" class="btn btn-primary flex-1">Log in</button>
+        <button type="submit" value="register" class="btn flex-1">Register</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="upload-section" class="card bg-base-100 shadow hidden">
+    {# The route answers this request with an HTML fragment because HTMX sends
+       HX-Request; the same route returns JSON to any other client. #}
+    <form id="upload-form" class="card-body gap-3"
+          hx-post="/cards/from-photo" hx-encoding="multipart/form-data"
+          hx-target="#result" hx-swap="innerHTML"
+          hx-indicator="#spinner" hx-disabled-elt="find button">
+      <h2 class="card-title">Photograph an object</h2>
+      {# No capture="environment": on phones it forces the camera and hides the
+         gallery. Without it, the picker still offers the camera as an option. #}
+      <input name="file" type="file" required accept="image/jpeg,image/png,image/webp"
+             class="file-input file-input-bordered w-full">
+      <button type="submit" class="btn btn-primary">
+        <span id="spinner" class="loading loading-spinner htmx-indicator"></span>
+        Make a card
+      </button>
+    </form>
+  </section>
+
+  <section id="result" aria-live="polite"></section>
+</main>
+
+<style>
+  /* HTMX adds .htmx-request to the indicator while a request is in flight. */
+  .htmx-indicator { display: none; }
+  .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline-block; }
+</style>
+
+<script>
+  // The JWT is kept in localStorage because the API authenticates with a Bearer
+  // header (no cookies). Trade-off: a script injected by XSS could read it. Jinja
+  // autoescaping and no third-party scripts beyond pinned CDN libraries limit
+  // that; moving to an HttpOnly cookie would also need CSRF protection.
+  const TOKEN_KEY = "phocab_token";
+  const $ = (id) => document.getElementById(id);
+
+  function showError(message) {
+    $("error").textContent = message;
+    $("error").classList.toggle("hidden", !message);
+  }
+
+  // FastAPI errors are {"detail": "..."} or, for 422, {"detail": [{msg, ...}]}.
+  async function errorMessage(response) {
+    try {
+      const body = await response.json();
+      if (Array.isArray(body.detail)) return body.detail.map((e) => e.msg).join("; ");
+      if (body.detail) return body.detail;
+    } catch (_) { /* not JSON, e.g. a proxy error page */ }
+    return `Request failed (${response.status})`;
+  }
+
+  async function showApp() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const me = token && await fetch("/me", { headers: { Authorization: `Bearer ${token}` } });
+    const loggedIn = Boolean(me && me.ok);
+    if (!loggedIn) localStorage.removeItem(TOKEN_KEY);  // expired or invalid token
+    $("auth-section").classList.toggle("hidden", loggedIn);
+    $("upload-section").classList.toggle("hidden", !loggedIn);
+    $("whoami").classList.toggle("hidden", !loggedIn);
+    $("whoami").classList.toggle("flex", loggedIn);
+    $("whoami-email").textContent = loggedIn ? (await me.json()).email : "";
+  }
+
+  async function postJson(url, body) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  $("auth-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showError("");
+    const form = new FormData(event.target);
+    const credentials = { email: form.get("email"), password: form.get("password") };
+    if (event.submitter.value === "register") {
+      const registered = await postJson("/auth/register", credentials);
+      if (!registered.ok) return showError(await errorMessage(registered));
+    }
+    const login = await postJson("/auth/login", credentials);
+    if (!login.ok) return showError(await errorMessage(login));
+    localStorage.setItem(TOKEN_KEY, (await login.json()).access_token);
+    event.target.reset();
+    showApp();
+  });
+
+  $("logout").addEventListener("click", () => {
+    localStorage.removeItem(TOKEN_KEY);
+    $("result").innerHTML = "";
+    showApp();
+  });
+
+  // Attach the JWT to every HTMX request.
+  document.body.addEventListener("htmx:configRequest", (event) => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) event.detail.headers["Authorization"] = `Bearer ${token}`;
+    showError("");
+  });
+
+  // HTMX doesn't swap 4xx/5xx responses; show the API's message instead.
+  document.body.addEventListener("htmx:responseError", async (event) => {
+    const xhr = event.detail.xhr;
+    if (xhr.status === 401) return showApp();  // token expired: back to login
+    showError(await errorMessage(new Response(xhr.responseText, { status: xhr.status })));
+  });
+  document.body.addEventListener("htmx:sendError", () => {
+    showError("Could not reach the server. Check your connection and try again.");
+  });
+
+  showApp();
+</script>
+</body>
+</html>

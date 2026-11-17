@@ -187,6 +187,30 @@ def test_same_object_twice_returns_the_existing_card(
     assert count(db_session, Photo) == 2
 
 
+def test_htmx_upload_gets_the_card_as_an_html_fragment(client: TestClient, fakes: SimpleNamespace):
+    headers = auth_headers(client) | {"HX-Request": "true"}
+
+    first = upload(client, headers)
+    second = upload(client, headers)
+
+    # Same status codes as the JSON API, so both clients see one contract.
+    assert (first.status_code, second.status_code) == (201, 200)
+    assert first.headers["content-type"].startswith("text/html")
+    for text in ("컵", "keop", "cup", "TOPIK 1", "컵에 물이 있어요.", "87%"):
+        assert text in first.text
+    assert "already in your deck" not in first.text
+    assert "already in your deck" in second.text
+
+
+def test_htmx_errors_stay_json_for_the_page_to_show(client: TestClient, fakes: SimpleNamespace):
+    headers = auth_headers(client) | {"HX-Request": "true"}
+
+    response = upload(client, headers, data=b"not an image")
+
+    assert response.status_code == 400
+    assert "detail" in response.json()
+
+
 def test_the_resized_jpeg_is_what_gets_stored_and_classified(
     client: TestClient, fakes: SimpleNamespace
 ):

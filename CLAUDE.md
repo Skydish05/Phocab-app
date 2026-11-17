@@ -28,6 +28,11 @@ Update these as they become real; keep them accurate.
 - Test: `pytest -q` (DB tests use a separate `phocab_test` database, created and migrated automatically)
 - Run locally (no Docker yet): `uvicorn app.main:app --reload` (needs `JWT_SECRET`, `S3_BUCKET`, `GEMINI_API_KEY` in `.env`; see `.env.example`)
 - Run model service locally: `uvicorn model_service.main:app --port 8001`
+- Try the web UI locally without AWS (fake in-memory S3; photos vanish on restart), with Postgres and the model service running:
+  `moto_server -p 5050 &` then
+  `export S3_BUCKET=phocab-local AWS_ENDPOINT_URL=http://127.0.0.1:5050 AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local`,
+  `python -c "import boto3; boto3.client('s3', region_name='ap-northeast-2').create_bucket(Bucket='phocab-local', CreateBucketConfiguration={'LocationConstraint': 'ap-northeast-2'})"`,
+  `uvicorn app.main:app --reload --port 8010`, open http://localhost:8010
 - Benchmark model (top-3, latency, peak memory): `python -m model_service.bench eval/photos`
 - Benchmark as a 2-vCPU box, saved to eval/results: `taskset -c 0,1 python -m model_service.bench eval/photos --threads 2 --repeat 5 --output eval/results/bench_2vcpu.md`
 - Run locally with Docker (only Postgres so far): `docker compose -f infra/docker-compose.yml up --build`
