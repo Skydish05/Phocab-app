@@ -1,7 +1,8 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, UploadFile, status
-from sqlalchemy import func, select
+from fastapi.responses import HTMLResponse
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, contains_eager
 
@@ -143,6 +144,7 @@ def create_card_from_photo(
         topik_level=word.topik_level,
         example=word.example,
         confidence=recognition.confidence,
+        photo_id=photo.id,
     )
     card_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
     if wants_html(request):
@@ -200,3 +202,26 @@ def list_cards(
         }
         return templates.TemplateResponse(request, "_deck.html", context)
     return deck
+
+
+@router.delete(
+    "/cards/{card_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={404: {"description": "No such card in this user's deck"}},
+)
+def remove_card(card_id: int, request: Request, user: CurrentUser, db: DbSession) -> Response:
+    # Deletes the deck entry only. The photo and any feedback stay: they're the
+    # evaluation record of what the model got wrong.
+    deleted = db.scalar(
+        delete(UserCard)
+        .where(UserCard.id == card_id, UserCard.user_id == user.id)
+        .returning(UserCard.id)
+    )
+    # 404 (not 403) for another user's card, as in review: ids can't be probed.
+    if deleted is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Card not found")
+    db.commit()
+    if wants_html(request):
+        # HTMX swaps nothing on a 204, so the page gets a short note to replace the card with.
+        return HTMLResponse('<p class="text-sm opacity-70 px-1">Removed from your deck.</p>')
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

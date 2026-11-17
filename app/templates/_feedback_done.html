@@ -1,0 +1,11 @@
+{# Replaces the "This is wrong" form once the report is saved. #}
+<div class="flex items-center justify-between gap-2">
+  <p class="text-sm">Thanks, reported.</p>
+  {% if card_id %}
+  {# hx-target the whole card: once removed, it shouldn't look like it's still saved. #}
+  <button class="btn btn-sm btn-outline"
+          hx-delete="/cards/{{ card_id }}" hx-target="closest article" hx-swap="outerHTML">
+    Remove from my deck
+  </button>
+  {% endif %}
+</div>

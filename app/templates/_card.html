@@ -9,9 +9,33 @@
       <span class="badge badge-outline whitespace-nowrap">TOPIK {{ card.topik_level }}</span>
     </div>
     <p class="text-lg" lang="ko">{{ card.example }}</p>
-    <p class="text-sm opacity-60">
-      Model confidence {{ "%.0f"|format(card.confidence * 100) }}%
-      {%- if not created %} · already in your deck{% endif %}
-    </p>
+    {% if not created %}<p class="text-sm opacity-60">Already in your deck</p>{% endif %}
+
+    {# <details> opens the form without JavaScript. The form posts JSON (json-enc),
+       like every other API route, and the reply replaces this block. #}
+    <details class="feedback text-sm">
+      <summary class="cursor-pointer opacity-70">This is wrong</summary>
+      <form class="mt-2 space-y-2" hx-post="/feedback" hx-ext="json-enc"
+            hx-target="closest details" hx-swap="outerHTML" hx-disabled-elt="find button">
+        <input type="hidden" name="photo_id" value="{{ card.photo_id }}">
+        <div class="flex flex-wrap gap-x-4 gap-y-1">
+          <label class="flex items-center gap-1">
+            <input type="radio" name="reason" value="wrong_object" class="radio radio-sm" required checked>
+            Wrong object
+          </label>
+          <label class="flex items-center gap-1">
+            <input type="radio" name="reason" value="wrong_korean" class="radio radio-sm">
+            Wrong Korean
+          </label>
+          <label class="flex items-center gap-1">
+            <input type="radio" name="reason" value="other" class="radio radio-sm">
+            Other
+          </label>
+        </div>
+        <input type="text" name="note" maxlength="500" placeholder="What's wrong? (optional)"
+               class="input input-bordered input-sm w-full">
+        <button type="submit" class="btn btn-sm">Send report</button>
+      </form>
+    </details>
   </div>
 </article>

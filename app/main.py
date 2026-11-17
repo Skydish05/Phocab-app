@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.config import get_settings
-from app.routers import auth, cards, pages, review
+from app.routers import auth, cards, feedback, pages, review
 
 
 def create_app() -> FastAPI:
@@ -19,6 +19,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(cards.router)
     app.include_router(review.router)
+    app.include_router(feedback.router)
     app.include_router(pages.router)
     return app
 

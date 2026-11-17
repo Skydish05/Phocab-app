@@ -120,8 +120,9 @@ def test_cache_miss_generates_the_card_and_saves_everything(
 
     assert response.status_code == 201
     body = response.json()
-    assert body | {"card_id": None} == {
+    assert body | {"card_id": None, "photo_id": None} == {
         "card_id": None,
+        "photo_id": None,
         "label_en": "cup",
         "korean": "컵",
         "romanization": "keop",
@@ -187,7 +188,9 @@ def test_same_object_twice_returns_the_existing_card(
     assert count(db_session, Photo) == 2
 
 
-def test_htmx_upload_gets_the_card_as_an_html_fragment(client: TestClient, fakes: SimpleNamespace):
+def test_htmx_upload_gets_the_card_as_an_html_fragment(
+    client: TestClient, fakes: SimpleNamespace, db_session: Session
+):
     headers = auth_headers(client) | {"HX-Request": "true"}
 
     first = upload(client, headers)
@@ -196,10 +199,14 @@ def test_htmx_upload_gets_the_card_as_an_html_fragment(client: TestClient, fakes
     # Same status codes as the JSON API, so both clients see one contract.
     assert (first.status_code, second.status_code) == (201, 200)
     assert first.headers["content-type"].startswith("text/html")
-    for text in ("컵", "keop", "cup", "TOPIK 1", "컵에 물이 있어요.", "87%"):
+    for text in ("컵", "keop", "cup", "TOPIK 1", "컵에 물이 있어요.", "This is wrong"):
         assert text in first.text
-    assert "already in your deck" not in first.text
-    assert "already in your deck" in second.text
+    # The raw score isn't shown: a correct guess can score 0.01 and read as "1%".
+    assert "87%" not in first.text
+    photo_id = db_session.scalars(select(Photo.id).order_by(Photo.id)).first()
+    assert f'name="photo_id" value="{photo_id}"' in first.text
+    assert "Already in your deck" not in first.text
+    assert "Already in your deck" in second.text
 
 
 def test_htmx_errors_stay_json_for_the_page_to_show(client: TestClient, fakes: SimpleNamespace):

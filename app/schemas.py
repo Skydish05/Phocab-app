@@ -3,7 +3,9 @@
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, EmailStr, Field
+
+from app.models import FeedbackReason
 
 # Lowercased so "A@x.com" and "a@x.com" are one account: the unique constraint
 # on users.email is case-sensitive.
@@ -47,9 +49,13 @@ class CardOut(BaseModel):
     romanization: str
     topik_level: int
     example: str
-    # The model's score for this label, shown so a low-confidence card can be
-    # flagged in the UI and reported with the "this is wrong" button.
+    # The model's raw score for this label. Returned for clients and debugging but
+    # not shown on the page: SigLIP scores are independent probabilities, so a
+    # correct guess can score 0.01 and would read as "1% sure".
     confidence: float
+    # The photo this card was made from, so "this is wrong" can point at the
+    # exact photo and guess (the evaluation dataset), not just the word.
+    photo_id: int
 
 
 class DeckCard(BaseModel):
@@ -93,3 +99,30 @@ class ReviewResult(BaseModel):
     next_review_at: datetime
     times_correct: int
     times_wrong: int
+
+
+def _blank_to_none(value: object) -> object:
+    # The page's form always sends the note field; an empty or whitespace-only
+    # note means "no note", stored as NULL rather than "".
+    if isinstance(value, str) and not value.strip():
+        return None
+    return value
+
+
+class FeedbackIn(BaseModel):
+    photo_id: int
+    reason: FeedbackReason
+    # Capped: free text from users ends up in an eval spreadsheet, not an essay.
+    note: Annotated[
+        Annotated[str, Field(max_length=500)] | None, BeforeValidator(_blank_to_none)
+    ] = None
+
+
+class FeedbackOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    photo_id: int | None
+    word_id: int | None
+    reason: FeedbackReason
+    note: str | None
