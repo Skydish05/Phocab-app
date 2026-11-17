@@ -1,6 +1,7 @@
 {# HTMX fragment for the "My deck" tab; rendered from the same CardList as the JSON API.
    Later pages (offset > 0) render only their list and button: they replace the
    "Show more" button in place, so the list grows without reloading the top. #}
+{% from "_speak.html" import speak %}
 {% if offset == 0 %}
 {% if not deck.total %}
 <div class="card bg-base-100 shadow">
@@ -18,13 +19,21 @@
   <li class="card bg-base-100 shadow">
     <div class="card-body p-4 gap-1">
       <div class="flex items-baseline justify-between gap-2">
-        <p class="text-2xl font-bold" lang="ko">{{ card.korean }}</p>
+        <div class="flex items-center gap-1">
+          <p class="text-2xl font-bold grow-0" lang="ko">{{ card.korean }}</p>
+          {{ speak(card.korean, "Listen to the word") }}
+        </div>
         <span class="text-xs opacity-60 whitespace-nowrap">
           Box {{ card.box }} · {{ card.next_review_at | due_label(now) }}
         </span>
       </div>
       <p class="text-sm opacity-70">{{ card.romanization }} · {{ card.label_en }} · TOPIK {{ card.topik_level }}</p>
-      {% if card.example %}<p lang="ko">{{ card.example }}</p>{% endif %}
+      {% if card.example %}
+      <div class="flex items-start gap-1">
+        <p class="grow-0" lang="ko">{{ card.example }}</p>
+        {{ speak(card.example, "Listen to the sentence") }}
+      </div>
+      {% endif %}
     </div>
   </li>
   {% endfor %}

@@ -214,6 +214,9 @@ def test_htmx_upload_gets_the_card_as_an_html_fragment(
     assert "87%" not in first.text
     photo_id = db_session.scalars(select(Photo.id).order_by(Photo.id)).first()
     assert f'name="photo_id" value="{photo_id}"' in first.text
+    # Listen buttons for the word and the sentence.
+    assert 'data-speak="컵"' in first.text
+    assert 'data-speak="컵에 물이 있어요."' in first.text
     assert "Already in your deck" not in first.text
     assert "Already in your deck" in second.text
 

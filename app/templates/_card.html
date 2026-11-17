@@ -1,14 +1,21 @@
 {# HTMX fragment for one card; rendered from the same CardOut the JSON API returns. #}
+{% from "_speak.html" import speak %}
 <article class="card bg-base-100 shadow">
   <div class="card-body gap-2">
     <div class="flex items-start justify-between gap-2">
       <div>
-        <p class="text-4xl font-bold" lang="ko">{{ card.korean }}</p>
+        <div class="flex items-center gap-1">
+          <p class="text-4xl font-bold grow-0" lang="ko">{{ card.korean }}</p>
+          {{ speak(card.korean, "Listen to the word") }}
+        </div>
         <p class="opacity-70">{{ card.romanization }} · {{ card.label_en }}</p>
       </div>
       <span class="badge badge-outline whitespace-nowrap">TOPIK {{ card.topik_level }}</span>
     </div>
-    <p class="text-lg" lang="ko">{{ card.example }}</p>
+    <div class="flex items-start gap-1">
+      <p class="text-lg grow-0" lang="ko">{{ card.example }}</p>
+      {{ speak(card.example, "Listen to the sentence") }}
+    </div>
     {% if not created %}<p class="text-sm opacity-60">Already in your deck</p>{% endif %}
 
     {# <details> opens the form without JavaScript. The form posts JSON (json-enc),

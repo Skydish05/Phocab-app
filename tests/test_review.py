@@ -115,6 +115,8 @@ def test_htmx_review_shows_the_front_and_triggers_a_reload(client: TestClient, d
     assert page.headers["content-type"].startswith("text/html")
     assert "1 card due" in page.text and "cup" in page.text
     assert f'hx-post="/review/{card.id}"' in page.text
+    # The Listen button sits in the hidden answer, so it can't give the word away.
+    assert page.text.index("Show answer") < page.text.index('data-speak="cup-ko"')
     assert answer.headers["HX-Trigger"] == "card-reviewed"
     assert "All done for now" in done.text and "due in 2 days" in done.text
 

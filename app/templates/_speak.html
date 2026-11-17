@@ -1,0 +1,10 @@
+{# Pronunciation button: reads `text` aloud with the browser's own speech synthesis
+   (one click handler in index.html). PLAN.md version 1: no TTS service, no audio
+   files to store. The button is hidden by CSS until the page finds a Korean voice,
+   so a fragment swapped in later needs no script of its own.
+   The text next to it needs `grow-0`: DaisyUI gives every <p> in a card
+   flex-grow: 1, which would push the button to the far edge of the row. #}
+{% macro speak(text, label="Listen") -%}
+<button type="button" class="speak btn btn-ghost btn-sm btn-circle shrink-0"
+        data-speak="{{ text }}" aria-label="{{ label }}" title="{{ label }}">🔊</button>
+{%- endmacro %}

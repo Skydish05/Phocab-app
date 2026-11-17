@@ -96,6 +96,9 @@ def test_htmx_deck_is_html_with_a_show_more_button(client: TestClient, db_sessio
     assert first.headers["content-type"].startswith("text/html")
     assert "3 cards" in first.text and "a-ko" in first.text and "b-ko" in first.text
     assert 'hx-get="/cards?offset=2&limit=2"' in first.text
+    assert 'data-speak="a-ko"' in first.text and 'data-speak="c-ko"' in last.text
+    # These words have no example sentence yet, so there is nothing to read out.
+    assert "Listen to the sentence" not in first.text
     # A later page is just more list items: no header, and no button after the last page.
     assert "c-ko" in last.text and "3 cards" not in last.text and "Show more" not in last.text
 

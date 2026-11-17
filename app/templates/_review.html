@@ -1,4 +1,5 @@
 {# HTMX fragment for the Review tab; rendered from the same ReviewNext as the JSON API. #}
+{% from "_speak.html" import speak %}
 {% set card = review.card %}
 {% if card %}
 <p class="text-sm opacity-70 px-1 mb-2">{{ review.due_count }} card{{ "s" if review.due_count != 1 }} due</p>
@@ -15,9 +16,18 @@
     <details class="group">
       <summary class="btn btn-block group-open:hidden">Show answer</summary>
       <div class="space-y-3 text-center">
-        <p class="text-4xl font-bold" lang="ko">{{ card.korean }}</p>
+        {# Inside the answer, so listening can't give the word away. #}
+        <div class="flex items-center justify-center gap-1">
+          <p class="text-4xl font-bold grow-0" lang="ko">{{ card.korean }}</p>
+          {{ speak(card.korean, "Listen to the word") }}
+        </div>
         <p class="opacity-70">{{ card.romanization }}</p>
-        {% if card.example %}<p lang="ko">{{ card.example }}</p>{% endif %}
+        {% if card.example %}
+        <div class="flex items-start justify-center gap-1">
+          <p class="grow-0" lang="ko">{{ card.example }}</p>
+          {{ speak(card.example, "Listen to the sentence") }}
+        </div>
+        {% endif %}
         {# json-enc: the route takes a JSON body like every other API route.
            hx-swap="none": the JSON result isn't shown; the HX-Trigger it sends
            makes #review load the next card. #}

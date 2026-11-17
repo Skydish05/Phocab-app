@@ -91,6 +91,9 @@
   /* HTMX adds .htmx-request to the indicator while a request is in flight. */
   .htmx-indicator { display: none; }
   .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline-block; }
+  /* Listen buttons appear only once a Korean voice is found (see the script).
+     A body class rather than per-button code also covers fragments swapped in later. */
+  body:not(.can-speak) [data-speak] { display: none; }
 </style>
 
 <script>
@@ -201,6 +204,36 @@
   });
   document.body.addEventListener("htmx:sendError", () => {
     showError("Could not reach the server. Check your connection and try again.");
+  });
+
+  // Pronunciation (PLAN.md version 1): the browser's own speech synthesis, so no
+  // TTS service, cost or stored audio. Quality depends on the device's Korean
+  // voice. Without one the browser would read Korean with another language's
+  // voice, or say nothing, so the buttons stay hidden instead.
+  const speech = window.speechSynthesis;
+  let koreanVoice = null;
+  function findKoreanVoice() {
+    // Some Android browsers report "ko_KR" instead of "ko-KR".
+    koreanVoice = speech.getVoices().find((v) => /^ko([-_]|$)/i.test(v.lang)) || null;
+    document.body.classList.toggle("can-speak", Boolean(koreanVoice));
+  }
+  if (speech) {
+    // Chrome loads voices asynchronously: getVoices() is often empty at first,
+    // and "voiceschanged" fires once they are ready.
+    findKoreanVoice();
+    speech.addEventListener("voiceschanged", findKoreanVoice);
+  }
+
+  // One handler for every Listen button, including ones swapped in later.
+  document.body.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-speak]");
+    if (!button || !koreanVoice) return;
+    speech.cancel();  // a second tap restarts instead of queueing behind the first
+    const utterance = new SpeechSynthesisUtterance(button.dataset.speak);
+    utterance.lang = "ko-KR";
+    utterance.voice = koreanVoice;
+    utterance.rate = 0.85;  // a little slower than normal speech, for a learner
+    speech.speak(utterance);
   });
 
   showApp();
