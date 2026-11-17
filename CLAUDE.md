@@ -35,7 +35,7 @@ Update these as they become real; keep them accurate.
   `uvicorn app.main:app --reload --port 8010`, open http://localhost:8010
 - Benchmark model (top-3, latency, peak memory): `python -m model_service.bench eval/photos`
 - Benchmark as a 2-vCPU box, saved to eval/results: `taskset -c 0,1 python -m model_service.bench eval/photos --threads 2 --repeat 5 --output eval/results/bench_2vcpu.md`
-- Run locally with Docker (only Postgres so far): `docker compose -f infra/docker-compose.yml up --build`
+- Run locally with Docker (Postgres, model service, API on 127.0.0.1:8000): `docker compose -f infra/docker-compose.yml up --build`
 - Migrate: `alembic upgrade head`
 - New migration after a model change: `alembic revision --autogenerate -m "..."`, then review the file by hand
 - Eval (not yet available): `python eval/run_eval.py`

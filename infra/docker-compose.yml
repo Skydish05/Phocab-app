@@ -1,5 +1,5 @@
-# Local development. Only Postgres for now; the API runs on the host with uvicorn
-# until the Dockerfiles item adds the app and model_service here.
+# Local development: Postgres, the model service, and the API.
+#   docker compose -f infra/docker-compose.yml up --build
 # Fixed project name; otherwise Compose names it after the folder ("infra").
 name: phocab
 
@@ -27,5 +27,48 @@ services:
       timeout: 3s
       retries: 15
 
+  model_service:
+    build:
+      context: ..
+      dockerfile: model_service/Dockerfile
+    # No env_file: the defaults in model_service/main.py are enough, and this
+    # container has no reason to see the JWT secret or the Gemini key.
+    volumes:
+      # Weights survive container restarts and image rebuilds.
+      - hf_cache:/hf_cache
+    # No published port: only the API talks to the model (PLAN.md architecture).
+    # Healthcheck comes from the Dockerfile.
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    env_file:
+      # JWT_SECRET, S3_BUCKET, GEMINI_API_KEY, AWS_REGION, ... from the repo's .env.
+      - path: ../.env
+        required: false
+    environment:
+      # Override the .env values, which point at localhost for running uvicorn on
+      # the host. Inside a container, localhost is the container itself.
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-phocab}:${POSTGRES_PASSWORD:-phocab}@db:5432/${POSTGRES_DB:-phocab}
+      MODEL_SERVICE_URL: http://model_service:8001
+      # No values on purpose: Compose copies these from the shell that runs
+      # `docker compose up` (e.g. after `aws configure export-credentials`), so
+      # short-lived AWS credentials never touch a file. Unset in the shell means
+      # unset in the container. On EC2 none are set and boto3 uses the instance role.
+      AWS_ACCESS_KEY_ID:
+      AWS_SECRET_ACCESS_KEY:
+      AWS_SESSION_TOKEN:
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      # Migrations run at API startup, so Postgres must be accepting connections;
+      # waiting for the model avoids 502s while its weights are still loading.
+      db:
+        condition: service_healthy
+      model_service:
+        condition: service_healthy
+
 volumes:
   pgdata:
+  hf_cache:
