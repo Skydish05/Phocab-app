@@ -1,5 +1,6 @@
 """Pydantic request/response models for the JSON API."""
 
+from datetime import datetime
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field
@@ -49,3 +50,26 @@ class CardOut(BaseModel):
     # The model's score for this label, shown so a low-confidence card can be
     # flagged in the UI and reported with the "this is wrong" button.
     confidence: float
+
+
+class DeckCard(BaseModel):
+    """A card as the deck shows it: the word plus the user's Leitner state."""
+
+    card_id: int
+    label_en: str
+    korean: str
+    romanization: str
+    topik_level: int
+    # Nullable like words.example: a vocabulary fix voids the sentence until it
+    # is regenerated, and the card should still be listed meanwhile.
+    example: str | None
+    box: int
+    next_review_at: datetime
+    created_at: datetime
+
+
+class CardList(BaseModel):
+    items: list[DeckCard]
+    # The full count (not just this page), so a client can show "12 cards" and
+    # know when to stop paging.
+    total: int

@@ -40,7 +40,17 @@
     </form>
   </section>
 
-  <section id="upload-section" class="card bg-base-100 shadow hidden">
+  <div id="app" class="space-y-4 hidden">
+  {# Each tab that shows server data fetches it when opened (hx-get), so the deck
+     is always current, e.g. right after adding a card. #}
+  <nav role="tablist" class="tabs tabs-boxed">
+    <button role="tab" class="tab tab-active" data-panel="panel-new">New card</button>
+    <button role="tab" class="tab" data-panel="panel-deck"
+            hx-get="/cards" hx-target="#deck">My deck</button>
+  </nav>
+
+  <div id="panel-new" class="space-y-4">
+  <section class="card bg-base-100 shadow">
     {# The route answers this request with an HTML fragment because HTMX sends
        HX-Request; the same route returns JSON to any other client. #}
     <form id="upload-form" class="card-body gap-3"
@@ -60,6 +70,12 @@
   </section>
 
   <section id="result" aria-live="polite"></section>
+  </div>
+
+  <div id="panel-deck" class="hidden">
+    <section id="deck" aria-live="polite"></section>
+  </div>
+  </div>
 </main>
 
 <style>
@@ -97,7 +113,7 @@
     const loggedIn = Boolean(me && me.ok);
     if (!loggedIn) localStorage.removeItem(TOKEN_KEY);  // expired or invalid token
     $("auth-section").classList.toggle("hidden", loggedIn);
-    $("upload-section").classList.toggle("hidden", !loggedIn);
+    $("app").classList.toggle("hidden", !loggedIn);
     $("whoami").classList.toggle("hidden", !loggedIn);
     $("whoami").classList.toggle("flex", loggedIn);
     $("whoami-email").textContent = loggedIn ? (await me.json()).email : "";
@@ -130,7 +146,23 @@
   $("logout").addEventListener("click", () => {
     localStorage.removeItem(TOKEN_KEY);
     $("result").innerHTML = "";
+    $("deck").innerHTML = "";
+    showTab("panel-new");
     showApp();
+  });
+
+  // Tabs only switch visibility; loading a tab's data is the tab's own hx-get.
+  function showTab(panelId) {
+    document.querySelectorAll("[role=tab]").forEach((tab) => {
+      const active = tab.dataset.panel === panelId;
+      tab.classList.toggle("tab-active", active);
+      tab.setAttribute("aria-selected", active);
+      $(tab.dataset.panel).classList.toggle("hidden", !active);
+    });
+    showError("");
+  }
+  document.querySelectorAll("[role=tab]").forEach((tab) => {
+    tab.addEventListener("click", () => showTab(tab.dataset.panel));
   });
 
   // Attach the JWT to every HTMX request.

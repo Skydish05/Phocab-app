@@ -1,9 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, UploadFile, status
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, contains_eager
 
 from app.deps import (
     CurrentUser,
@@ -14,13 +14,13 @@ from app.deps import (
     get_vocabulary,
 )
 from app.models import Photo, UserCard
-from app.schemas import CardOut
+from app.schemas import CardList, CardOut, DeckCard
 from app.services.cache import UnknownLabelError, Vocabulary, get_or_create_word
 from app.services.card_generator import CardGenerationError, LLMClient, LLMError
 from app.services.images import MAX_UPLOAD_BYTES, ImageError, prepare_upload
 from app.services.recognizer import RecognitionError, Recognizer
 from app.services.storage import PhotoStorage, StorageError
-from app.templating import templates
+from app.templating import templates, wants_html
 
 router = APIRouter(tags=["cards"])
 
@@ -129,12 +129,68 @@ def create_card_from_photo(
         confidence=recognition.confidence,
     )
     card_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
-    # One route for both clients (PLAN.md: the JSON API is the contract): HTMX
-    # marks its requests with HX-Request and gets the card as an HTML fragment to
-    # swap in; everyone else gets JSON. This keeps a single copy of the pipeline.
-    if request.headers.get("HX-Request") == "true":
+    if wants_html(request):
         return templates.TemplateResponse(
             request, "_card.html", {"card": card, "created": created}, status_code=card_status
         )
     response.status_code = card_status
     return card
+
+
+@router.get("/cards", response_model=CardList)
+def list_cards(
+    request: Request,
+    user: CurrentUser,
+    db: DbSession,
+    # Capped so one request can't pull a whole deck of thousands of cards.
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    box: Annotated[int | None, Query(ge=1, le=5)] = None,
+) -> CardList | Response:
+    # Offset paging rather than cursors: a personal deck is small (hundreds of
+    # cards), so OFFSET stays cheap and the client can jump to any page.
+    filters = [UserCard.user_id == user.id]
+    if box is not None:
+        filters.append(UserCard.box == box)
+    total = db.scalar(select(func.count()).select_from(UserCard).where(*filters))
+    rows = db.scalars(
+        select(UserCard)
+        .where(*filters)
+        .join(UserCard.word)
+        # Fill card.word from this JOIN; otherwise each card lazy-loads its word
+        # with its own query (N+1).
+        .options(contains_eager(UserCard.word))
+        # Newest first, with id as a tie-breaker so paging is stable when two
+        # cards share a timestamp (one transaction, or a bulk import).
+        .order_by(UserCard.created_at.desc(), UserCard.id.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    deck = CardList(
+        items=[
+            DeckCard(
+                card_id=card.id,
+                label_en=card.word.label_en,
+                korean=card.word.korean,
+                romanization=card.word.romanization,
+                topik_level=card.word.topik_level,
+                example=card.word.example,
+                box=card.box,
+                next_review_at=card.next_review_at,
+                created_at=card.created_at,
+            )
+            for card in rows
+        ],
+        total=total,
+    )
+    if wants_html(request):
+        next_offset = offset + limit if offset + limit < total else None
+        context = {
+            "deck": deck,
+            "offset": offset,
+            "limit": limit,
+            "box": box,
+            "next_offset": next_offset,
+        }
+        return templates.TemplateResponse(request, "_deck.html", context)
+    return deck
